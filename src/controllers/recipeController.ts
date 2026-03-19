@@ -1,16 +1,16 @@
 import { Request, Response } from "express";
-import { db } from "../config/db";
+import { pool } from "../config/db";
 import { computeDifficulty } from "../services/recipeService";
 
 export const getRecipes = async (req: Request, res: Response) => {
-  const [rows] = await db.query("SELECT * FROM recipes");
+  const [rows] = await pool.query("SELECT * FROM recipes");
   res.json(rows);
 };
 
 export const createRecipe = async (req: Request, res: Response) => {
   const data = req.body;
 
-  await db.query(
+  await pool.query(
     `INSERT INTO recipes 
     (name, ingredients, servings, oven, equipment, exotic, country, price, authorId, views)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
@@ -31,7 +31,7 @@ export const createRecipe = async (req: Request, res: Response) => {
 };
 
 export const getRecipe = async (req: Request, res: Response) => {
-  const [rows]: any = await db.query(
+  const [rows]: any = await pool.query(
     "SELECT * FROM recipes WHERE id = ?",
     [req.params.id]
   );
@@ -40,7 +40,7 @@ export const getRecipe = async (req: Request, res: Response) => {
 
   if (!recipe) return res.status(404).send();
 
-  await db.query("UPDATE recipes SET views = views + 1 WHERE id = ?", [
+  await pool.query("UPDATE recipes SET views = views + 1 WHERE id = ?", [
     recipe.id,
   ]);
 

@@ -1,14 +1,14 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { db } from "../config/db";
+import { pool } from "../config/db";
 
 export const register = async (req: Request, res: Response) => {
   const { name, password } = req.body;
 
   const hash = await bcrypt.hash(password, 10);
 
-  await db.query(
+  await pool.query(
     "INSERT INTO users (name, passwordHash) VALUES (?, ?)",
     [name, hash]
   );
@@ -16,21 +16,32 @@ export const register = async (req: Request, res: Response) => {
   res.json({ message: "User created" });
 };
 
-export const login = async (req: Request, res: Response) => {
+
+export const login = async (req: any, res: any) => {
   const { name, password } = req.body;
 
-  const [rows]: any = await db.query(
+  const connection = await pool.getConnection();
+
+  const [dbUsers]: any = await connection.query(
     "SELECT * FROM users WHERE name = ?",
     [name]
   );
 
-  const user = rows[0];
+  connection.release();
 
-  if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
-    return res.status(401).json({ error: "Invalid credentials" });
+  if (dbUsers.length === 0) {
+    res.sendStatus(401);
+    return;
   }
 
-  const token = jwt.sign({ id: user.id }, "SECRET");
+  const dbUser = dbUsers[0];
 
-  res.json({ token });
+  const valid = await bcrypt.compare(password, dbUser.passwordHash);
+
+  if (!valid) {
+    res.sendStatus(401);
+    return;
+  }
+
+  res.json({ message: "Login OK", user: dbUser.name });
 };
