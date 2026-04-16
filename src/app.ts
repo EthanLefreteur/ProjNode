@@ -1,3 +1,4 @@
+import cors from "cors";
 import { schemaExist, createSchema } from "./config/db";
 import dotenv from "dotenv";
 dotenv.config();
@@ -7,6 +8,12 @@ import authRoutes from "./routes/authRoutes";
 import recipeRoutes from "./routes/recipeRoutes";
 
 const app = express();
+
+app.use(
+  cors({
+    origin: "http://localhost:5173", // change if your frontend runs elsewhere
+  })
+);
 
 app.use(express.json());
 
